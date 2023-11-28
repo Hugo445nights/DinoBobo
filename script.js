@@ -44,6 +44,8 @@ let gravity = 0.4;
 // game management
 let gameOver = false;
 let score = 0;
+let highscoreEnabled = false;
+let highscore = 0;
 
 // animation
 let boboImages = [];
@@ -73,6 +75,7 @@ window.onload = function () {
     // new enemy every 1s
     setInterval(placeBoboEnemy, 1000);
     document.addEventListener("keydown", moveBobo);
+    document.addEventListener("keydown", restartGame);
 }
 
 function loadImages() {
@@ -118,7 +121,7 @@ function changeEnemyImage() {
 function update() {
     requestAnimationFrame(update);
     if (gameOver) {
-        return; // CODER ICI LE FAIT QUE L'ON PUISSE APPUYER SUR ESPACE POUR REPLAY
+        return;
     }
 
     context.clearRect(0, 0, board.width, board.height);
@@ -146,6 +149,16 @@ function update() {
             boboImg.onload = function() {
                 context.drawImage(boboImg, bobo.x, bobo.y, bobo.width, bobo.height);
             }
+
+            // display to retry
+            context.fillStyle="black";
+            context.font="20px courier";
+            context.fillText("Press SPACE to retry", 250, 125);
+
+            highscoreEnabled = true;
+            if (score > highscore) {
+                highscore = score + 1;
+            }
         }
     }
 
@@ -154,6 +167,23 @@ function update() {
     context.font="20px courier";
     score++;
     context.fillText(score, boardWidth - 75, 20);
+
+    // highscore
+    if (highscoreEnabled) {
+        context.fillStyle="black";
+        context.font="20px courier";
+        context.fillText("HI: " + highscore, 5, 20);
+    }
+}
+
+function restartGame(event) {
+    if (gameOver && event.code == "Space") {
+        score = 0;
+        boboEnemyArray = [];
+        boboImages = []
+        loadImages();
+        gameOver = false;
+    }
 }
 
 function moveBobo(event) {
