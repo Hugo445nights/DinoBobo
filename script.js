@@ -11,6 +11,8 @@ let boboX = 50;
 let boboY = boardHeight - boboHeight;
 let boboImg;
 let boboIsJumping = false;
+let isGliding = false;
+let canGlide = true;
 
 let bobo = {
     x: boboX,
@@ -46,6 +48,8 @@ let gameOver = false;
 let score = 0;
 let highscoreEnabled = false;
 let highscore = 0;
+let timer = 0;
+let increaseProba = 0;
 
 // animation
 let boboImages = [];
@@ -127,14 +131,26 @@ function update() {
     context.clearRect(0, 0, board.width, board.height);
 
     // draw bobo
-    velocityY += gravity;
-    bobo.y = Math.min(bobo.y + velocityY, boboY); // apply gravity (fall or stay on the dance floor)
+    if (!isGliding) {
+        velocityY += gravity;
+        bobo.y = Math.min(bobo.y + velocityY, boboY); // apply gravity (fall or stay on the dance floor)
+    }
+    else {
+        timer++;
+        if (timer > 100) {
+            isGliding = false;
+            timer = 0;
+        }
+    }
+
     boboIsJumping = bobo.y != boboY;
+
     if (boboIsJumping) {
         context.drawImage(boboImgJumping, bobo.x, bobo.y, bobo.width, bobo.height);
     }
     else {
         context.drawImage(boboImg, bobo.x, bobo.y, bobo.width, bobo.height);
+        canGlide = true;
     }
 
     // draw enemy
@@ -142,17 +158,17 @@ function update() {
         let enemy = boboEnemyArray[i];
         enemy.x += velocityX;
         context.drawImage(enemy.img, enemy.x, enemy.y, enemy.width, enemy.height);
-    
+
         if (collisionDectection(bobo, enemy)) {
             gameOver = true;
             boboImg.src = "./graphics/bobo_dead.png"
-            boboImg.onload = function() {
+            boboImg.onload = function () {
                 context.drawImage(boboImg, bobo.x, bobo.y, bobo.width, bobo.height);
             }
 
             // display to retry
-            context.fillStyle="black";
-            context.font="20px courier";
+            context.fillStyle = "black";
+            context.font = "20px courier";
             context.fillText("Press SPACE to retry", 250, 125);
 
             highscoreEnabled = true;
@@ -163,15 +179,15 @@ function update() {
     }
 
     // score
-    context.fillStyle="black";
-    context.font="20px courier";
+    context.fillStyle = "black";
+    context.font = "20px courier";
     score++;
     context.fillText(score, boardWidth - 75, 20);
 
     // highscore
     if (highscoreEnabled) {
-        context.fillStyle="black";
-        context.font="20px courier";
+        context.fillStyle = "black";
+        context.font = "20px courier";
         context.fillText("HI: " + highscore, 5, 20);
     }
 }
@@ -191,9 +207,18 @@ function moveBobo(event) {
         return;
     }
 
+    // jump
     if ((event.code == "Space" || event.code == "ArrowUp") && bobo.y == boboY) { // press space or arrow up AND bobo is on the dance floor
         velocityY = -9;
     }
+
+    // glide
+    if ((event.code == "Space" || event.code == "ArrowUp") && bobo.y != boboY && !isGliding && canGlide) {
+        velocity = -gravity;
+        isGliding = true;
+        canGlide = false;
+    }
+
 }
 
 function placeBoboEnemy() {
@@ -210,23 +235,32 @@ function placeBoboEnemy() {
     }
 
     let placeEnemyChance = Math.random(); // from 0 to 0.999...
+    if (score > 1000 && score <= 2000){
+        increaseProba = 0.05;
+    }
+    else if (score > 2000 && score <= 2500) {
+        increaseProba = 0.15;
+    }
+    else if (score > 2500) {
+        increaseProba = 0.30;
+    }
 
-    if (placeEnemyChance > 0.90) {
+    if (placeEnemyChance > 0.90 - increaseProba) {
         enemy.img = boboEnemy4Img;
         enemy.width = boboEnemyWidth4;
         boboEnemyArray.push(enemy);
     }
-    else if (placeEnemyChance > 0.75) {
+    else if (placeEnemyChance > 0.75 - increaseProba) {
         enemy.img = boboEnemy3Img;
         enemy.width = boboEnemyWidth3;
         boboEnemyArray.push(enemy);
     }
-    else if (placeEnemyChance > 0.60) {
+    else if (placeEnemyChance > 0.60 - increaseProba) {
         enemy.img = boboEnemy2Img;
         enemy.width = boboEnemyWidth2;
         boboEnemyArray.push(enemy);
     }
-    else if (placeEnemyChance > 0.40) {
+    else if (placeEnemyChance > 0.40 - increaseProba) {
         enemy.img = boboEnemy1Img;
         enemy.width = boboEnemyWidth1;
         boboEnemyArray.push(enemy);
